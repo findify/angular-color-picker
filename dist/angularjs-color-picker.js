@@ -1,10 +1,10 @@
 /*!
- * angularjs-color-picker v1.0.1
+ * @findify/angularjs-color-picker v1.0.1
  * https://github.com/ruhley/angular-color-picker/
  *
  * Copyright 2016 ruhley
  *
- * 2016-02-11 09:43:17
+ * 2016-03-17 15:27:18
  *
  */
 if (typeof module !== "undefined" && typeof exports !== "undefined" && module.exports === exports){
@@ -20,7 +20,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
 (function() {
     'use strict';
 
-    var colorPicker = function ($document) {
+    var colorPicker = function($document) {
         return {
             restrict: 'E',
             require: ['^ngModel'],
@@ -35,12 +35,13 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                 colorPickerSwatchPos: '=',
                 colorPickerSwatchBootstrap: '=',
                 colorPickerOnChange: '&',
+                disabled: '='
             },
             templateUrl: 'template/color-picker/directive.html',
-            link: function ($scope, element, attrs, control) {
+            link: function($scope, element, attrs, control) {
                 $scope.onChangeValue = null;
 
-                $scope.init = function () {
+                $scope.init = function() {
                     // if no color provided
                     if ($scope.ngModel === undefined) {
                         $scope.hue = 0;
@@ -65,6 +66,13 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $document.on('mousedown', $scope.onMouseDown);
                     $document.on('mouseup', $scope.onMouseUp);
                     $document.on('mousemove', $scope.onMouseMove);
+                    $document.on('keydown', function(e) {
+                        if (e.which === 9) {
+                            $scope.$apply(function(){
+                               $scope.hide();
+                            });
+                        }
+                    });
 
                     $scope.find('.color-picker-grid').on('click', $scope.onColorClick);
                     $scope.find('.color-picker-hue').on('click', $scope.onHueClick);
@@ -74,15 +82,16 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                 $scope.onMouseDown = function(event) {
                     // an element in this picker
                     if ($scope.find(event.target).length > 0) {
+                        $scope.isPicking = true;
                         // mouse event on color grid
                         if (event.target.classList.contains('color-picker-grid-inner') || event.target.classList.contains('color-picker-picker') || event.target.parentNode.classList.contains('color-picker-picker')) {
                             $scope.colorDown(event);
                             $scope.$apply();
-                        // mouse event on hue slider
+                            // mouse event on hue slider
                         } else if (event.target.classList.contains('color-picker-hue') || event.target.parentNode.classList.contains('color-picker-hue')) {
                             $scope.hueDown(event);
                             $scope.$apply();
-                        // mouse event on opacity slider
+                            // mouse event on opacity slider
                         } else if (event.target.classList.contains('color-picker-opacity') || event.target.parentNode.classList.contains('color-picker-opacity')) {
                             $scope.opacityDown(event);
                             $scope.$apply();
@@ -91,24 +100,28 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                 };
 
                 $scope.onMouseUp = function(event) {
+                    $scope.isPicking = false;
+
                     // no current mouse events and not an element in the picker
                     if (!$scope.colorMouse && !$scope.hueMouse && !$scope.opacityMouse && $scope.find(event.target).length === 0) {
                         $scope.log('Color Picker: Document Click Event');
-                        $scope.hide();
-                    // mouse event on color grid
+                        $scope.$apply(function() {
+                            $scope.hide();
+                        });
+                        // mouse event on color grid
                     } else if ($scope.colorMouse) {
                         $scope.colorUp(event);
                         $scope.$apply();
                         $scope.onChange(event);
-                    // mouse event on hue slider
+                        // mouse event on hue slider
                     } else if ($scope.hueMouse) {
                         $scope.hueUp(event);
-                        $scope.$apply();
+                        $scope.apply();
                         $scope.onChange(event);
-                    // mouse event on opacity slider
+                        // mouse event on opacity slider
                     } else if ($scope.opacityMouse) {
                         $scope.opacityUp(event);
-                        $scope.$apply();
+                        $scope.apply();
                         $scope.onChange(event);
                     }
                 };
@@ -118,11 +131,11 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     if ($scope.colorMouse) {
                         $scope.colorChange(event);
                         $scope.$apply();
-                    // mouse event on hue slider
+                        // mouse event on hue slider
                     } else if ($scope.hueMouse) {
                         $scope.hueChange(event);
                         $scope.$apply();
-                    // mouse event on opacity slider
+                        // mouse event on opacity slider
                     } else if ($scope.opacityMouse) {
                         $scope.opacityChange(event);
                         $scope.$apply();
@@ -168,12 +181,12 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $scope.log('Color Picker: Config', $scope.config);
                 };
 
-                $scope.focus = function () {
+                $scope.focus = function() {
                     $scope.log('Color Picker: Focus Event');
                     $scope.find('.color-picker-input')[0].focus();
                 };
 
-                $scope.show = function () {
+                $scope.show = function() {
                     $scope.log('Color Picker: Show Event');
                     $scope.visible = true;
                     $scope.hueMouse = false;
@@ -185,16 +198,15 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $scope.lightnessUpdate();
                 };
 
-                $scope.hide = function () {
-                    if ($scope.visible || element[0].querySelector('.color-picker-panel').offsetParent !== null) {
+                $scope.hide = function(e) {
+                    if (!$scope.isPicking && ($scope.visible || element[0].querySelector('.color-picker-panel').offsetParent !== null)) {
                         $scope.log('Color Picker: Hide Event');
 
                         $scope.visible = false;
-                        $scope.$apply();
                     }
                 };
 
-                $scope.update = function () {
+                $scope.update = function() {
                     if ($scope.hue !== undefined && $scope.saturation !== undefined && $scope.lightness !== undefined) {
                         var color = tinycolor({h: $scope.hue, s: $scope.saturation / 100, v: $scope.lightness / 100}),
                             colorString;
@@ -243,7 +255,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     }
                 };
 
-                $scope.$watch('ngModel', function (newValue, oldValue) {
+                $scope.$watch('ngModel', function(newValue, oldValue) {
                     if (newValue !== undefined && newValue !== null && newValue !== oldValue && newValue.length > 4) {
                         $scope.log('Color Picker: MODEL - CHANGED', newValue);
                         var color = tinycolor(newValue);
@@ -274,7 +286,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     }
                 });
 
-                $scope.$watch('colorPickerFormat', function (newValue, oldValue) {
+                $scope.$watch('colorPickerFormat', function(newValue, oldValue) {
                     if (newValue !== undefined && newValue !== oldValue) {
                         if (newValue === 'hex') {
                             $scope.colorPickerAlpha = false;
@@ -287,7 +299,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
 
                 $scope.$watchGroup(
                     ['colorPickerAlpha', 'colorPickerCase'],
-                    function (newValue, oldValue) {
+                    function(newValue, oldValue) {
                         if (newValue !== undefined) {
                             $scope.initConfig();
                             $scope.update();
@@ -297,7 +309,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
 
                 $scope.$watchGroup(
                     ['colorPickerSwatchPos', 'colorPickerSwatchBootstrap', 'colorPickerSwatchOnly', 'colorPickerSwatch', 'colorPickerPos'],
-                    function (newValue, oldValue) {
+                    function(newValue, oldValue) {
                         if (newValue !== undefined) {
                             $scope.initConfig();
                         }
@@ -352,7 +364,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                 //---------------------------
                 // HUE
                 //---------------------------
-                $scope.hueDown = function (event) {
+                $scope.hueDown = function(event) {
                     event.stopPropagation();
                     event.preventDefault();
 
@@ -360,7 +372,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $scope.hueMouse = true;
                 };
 
-                $scope.hueUp = function (event) {
+                $scope.hueUp = function(event) {
                     event.stopPropagation();
                     event.preventDefault();
 
@@ -368,7 +380,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $scope.hueMouse = false;
                 };
 
-                $scope.hueChange = function (event) {
+                $scope.hueChange = function(event) {
                     event.stopPropagation();
                     event.preventDefault();
 
@@ -399,14 +411,14 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     }
                 };
 
-                $scope.$watch('hue', function (newValue, oldValue) {
+                $scope.$watch('hue', function(newValue, oldValue) {
                     $scope.hueUpdate();
                 });
 
                 //---------------------------
                 // OPACITY
                 //---------------------------
-                $scope.opacityDown = function (event) {
+                $scope.opacityDown = function(event) {
                     event.stopPropagation();
                     event.preventDefault();
 
@@ -414,7 +426,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $scope.opacityMouse = true;
                 };
 
-                $scope.opacityUp = function (event) {
+                $scope.opacityUp = function(event) {
                     event.stopPropagation();
                     event.preventDefault();
 
@@ -422,7 +434,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $scope.opacityMouse = false;
                 };
 
-                $scope.opacityChange = function (event) {
+                $scope.opacityChange = function(event) {
                     event.stopPropagation();
                     event.preventDefault();
 
@@ -452,14 +464,14 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     }
                 };
 
-                $scope.$watch('opacity', function (newValue, oldValue) {
+                $scope.$watch('opacity', function(newValue, oldValue) {
                     $scope.opacityUpdate();
                 });
 
                 //---------------------------
                 // COLOR
                 //---------------------------
-                $scope.colorDown = function (event) {
+                $scope.colorDown = function(event) {
                     event.stopPropagation();
                     event.preventDefault();
 
@@ -467,7 +479,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $scope.colorMouse = true;
                 };
 
-                $scope.colorUp = function (event) {
+                $scope.colorUp = function(event) {
                     event.stopPropagation();
                     event.preventDefault();
 
@@ -475,7 +487,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $scope.colorMouse = false;
                 };
 
-                $scope.colorChange = function (event) {
+                $scope.colorChange = function(event) {
                     event.stopPropagation();
                     event.preventDefault();
 
@@ -514,7 +526,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     }
                 };
 
-                $scope.$watch('saturation', function (newValue, oldValue) {
+                $scope.$watch('saturation', function(newValue, oldValue) {
                     $scope.saturationUpdate(oldValue);
                 });
 
@@ -533,7 +545,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     }
                 };
 
-                $scope.$watch('lightness', function (newValue, oldValue) {
+                $scope.$watch('lightness', function(newValue, oldValue) {
                     $scope.lightnessUpdate(oldValue);
                 });
 
@@ -541,12 +553,12 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                 //---------------------------
                 // HELPER FUNCTIONS
                 //---------------------------
-                $scope.log = function () {
+                $scope.log = function() {
                     // console.log.apply(console, arguments);
                 };
 
                 // taken and modified from jQuery's find
-                $scope.find = function (selector) {
+                $scope.find = function(selector) {
                     var context = $scope.wrapper ? $scope.wrapper[0] : element[0],
                         results = [],
                         nodeType;
@@ -575,44 +587,44 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                 };
 
                 // taken and modified from jQuery's offset
-                $scope.offset = function (el) {
-            		var docElem, win, rect, doc, elem = el[0];
+                $scope.offset = function(el) {
+                    var docElem, win, rect, doc, elem = el[0];
 
-            		if (!elem) {
-            			return;
-            		}
+                    if (!elem) {
+                        return;
+                    }
 
-            		// Support: IE<=11+
-            		// Running getBoundingClientRect on a
-            		// disconnected node in IE throws an error
-            		if (!elem.getClientRects().length) {
-            			return {top: 0, left: 0};
-            		}
+                    // Support: IE<=11+
+                    // Running getBoundingClientRect on a
+                    // disconnected node in IE throws an error
+                    if (!elem.getClientRects().length) {
+                        return {top: 0, left: 0};
+                    }
 
-            		rect = elem.getBoundingClientRect();
+                    rect = elem.getBoundingClientRect();
 
-            		// Make sure element is not hidden (display: none)
-            		if ( rect.width || rect.height ) {
-            			doc = elem.ownerDocument;
-            			win = doc !== null && doc === doc.window ? doc : doc.nodeType === 9 && doc.defaultView;
-            			docElem = doc.documentElement;
+                    // Make sure element is not hidden (display: none)
+                    if (rect.width || rect.height) {
+                        doc = elem.ownerDocument;
+                        win = doc !== null && doc === doc.window ? doc : doc.nodeType === 9 && doc.defaultView;
+                        docElem = doc.documentElement;
 
                         // hack for small chrome screens not position the clicks properly when the page is scrolled
                         if (window.chrome && screen.width <= 768) {
                             return {
-                				top: rect.top - docElem.clientTop,
-                				left: rect.left - docElem.clientLeft
-                			};
+                                top: rect.top - docElem.clientTop,
+                                left: rect.left - docElem.clientLeft
+                            };
                         }
 
-            			return {
-            				top: rect.top + win.pageYOffset - docElem.clientTop,
-            				left: rect.left + win.pageXOffset - docElem.clientLeft
-            			};
-            		}
+                        return {
+                            top: rect.top + win.pageYOffset - docElem.clientTop,
+                            left: rect.left + win.pageXOffset - docElem.clientLeft
+                        };
+                    }
 
 
-            		return rect;
+                    return rect;
                 };
 
 
@@ -637,7 +649,7 @@ angular.module('color.picker').run(['$templateCache', function($templateCache) {
         '<div class="color-picker-wrapper" ng-class="{\'color-picker-swatch-only\': config.swatchOnly}">\n' +
         '   <div class="color-picker-input-wrapper" ng-class="{\'input-group\': config.swatchBootstrap && config.swatch}">\n' +
         '       <span ng-if="config.swatchPos === \'left\'" class="color-picker-swatch" ng-click="focus()" ng-show="config.swatch" ng-class="{\'color-picker-swatch-left\': config.swatchPos !== \'right\', \'color-picker-swatch-right\': config.swatchPos === \'right\', \'input-group-addon\': config.swatchBootstrap}"></span>\n' +
-        '       <input class="color-picker-input form-control" type="text" ng-model="ngModel" ng-change="onChange($event)" size="7" ng-focus="show()" ng-class="{\'color-picker-input-swatch\': config.swatch && !config.swatchOnly && config.swatchPos === \'left\'}">\n' +
+        '       <input ng-disabled="disabled" class="color-picker-input form-control" type="text" ng-model="ngModel" ng-change="onChange($event)" size="7" ng-blur="hide($event)" ng-focus="show()" ng-class="{\'color-picker-input-swatch\': config.swatch && !config.swatchOnly && config.swatchPos === \'left\'}">\n' +
         '       <span ng-if="config.swatchPos === \'right\'" class="color-picker-swatch" ng-click="focus()" ng-show="config.swatch" ng-class="{\'color-picker-swatch-left\': config.swatchPos !== \'right\', \'color-picker-swatch-right\': config.swatchPos === \'right\', \'input-group-addon\': config.swatchBootstrap}"></span>\n' +
         '   </div>\n' +
         '   <div class="color-picker-panel" ng-show="visible" ng-class="{\n' +
