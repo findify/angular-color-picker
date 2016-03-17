@@ -1,7 +1,7 @@
 {
   "name": "@findify/angularjs-color-picker",
   "description": "Color Picker Directive For AngularJS",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "MIT",
   "main": "dist/angularjs-color-picker.min.js",
   "dependencies": {
