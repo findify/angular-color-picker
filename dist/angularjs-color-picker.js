@@ -1,10 +1,10 @@
 /*!
- * @findify/angularjs-color-picker v1.0.1
+ * @findify/angularjs-color-picker v1.1.0
  * https://github.com/ruhley/angular-color-picker/
  *
  * Copyright 2016 ruhley
  *
- * 2016-03-17 15:27:18
+ * 2016-03-17 15:54:05
  *
  */
 if (typeof module !== "undefined" && typeof exports !== "undefined" && module.exports === exports){
@@ -66,17 +66,19 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $document.on('mousedown', $scope.onMouseDown);
                     $document.on('mouseup', $scope.onMouseUp);
                     $document.on('mousemove', $scope.onMouseMove);
-                    $document.on('keydown', function(e) {
-                        if (e.which === 9) {
-                            $scope.$apply(function(){
-                               $scope.hide();
-                            });
-                        }
-                    });
+                    $document.on('keydown', $scope.onKeyDown);
 
                     $scope.find('.color-picker-grid').on('click', $scope.onColorClick);
                     $scope.find('.color-picker-hue').on('click', $scope.onHueClick);
                     $scope.find('.color-picker-opacity').on('click', $scope.onOpacityClick);
+                };
+
+                $scope.onKeyDown = function (event) {
+                    if (event.which === 9) {
+                        $scope.$apply(function(){
+                            $scope.hide();
+                        });
+                    }
                 };
 
                 $scope.onMouseDown = function(event) {
@@ -116,12 +118,12 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                         // mouse event on hue slider
                     } else if ($scope.hueMouse) {
                         $scope.hueUp(event);
-                        $scope.apply();
+                        $scope.$apply();
                         $scope.onChange(event);
                         // mouse event on opacity slider
                     } else if ($scope.opacityMouse) {
                         $scope.opacityUp(event);
-                        $scope.apply();
+                        $scope.$apply();
                         $scope.onChange(event);
                     }
                 };
@@ -634,6 +636,7 @@ if (typeof module !== "undefined" && typeof exports !== "undefined" && module.ex
                     $document.off('mousedown', $scope.onMouseDown);
                     $document.off('mouseup', $scope.onMouseUp);
                     $document.off('mousemove', $scope.onMouseMove);
+                    $document.off('keydown', $scope.onKeyDown);
                 });
             }
         };
